@@ -9,6 +9,7 @@ Jeopardy Style International CTF.
 1st CTF organised by our team `DarkArmy`
 
 Date: Fri, 25 Sept. 2020, 08:45 NPT — Sun, 27 Sept. 2020, 08:45 NPT
+
 Challenges are from different category:- 
 
  1. Web
