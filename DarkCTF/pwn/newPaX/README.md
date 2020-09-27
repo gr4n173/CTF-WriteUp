@@ -10,7 +10,7 @@
 
 **Author: gr4n173**
 
-#### nc pwn.darkarmy.xyz 5001
+####  nc pwn.darkarmy.xyz 5001
 
 **Solution:**
 
