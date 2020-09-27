@@ -6,7 +6,7 @@
 ![DarkCTF](logo.jpeg)
 
 Jeopardy Style International CTF.
- 1st CTF organised by our team `DarkArmy`
+1st CTF organised by our team `DarkArmy`
 
 Challenges are from different category:- 
 
